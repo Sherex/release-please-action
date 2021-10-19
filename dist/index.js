@@ -61496,8 +61496,29 @@ class GitHub {
             repo: this.repo,
             branch,
         };
-        const repoTree = await this.request('GET /repos/:owner/:repo/git/trees/:branch', options);
-        const blobDescriptor = repoTree.data.tree.find(tree => tree.path === path);
+        let repoTree = await this.request('GET /repos/:owner/:repo/git/trees/:branch', options);
+        if (path.includes('/')) {
+            const directoriesArray = path.split('/').slice(0, -1);
+            let i = 0;
+            for (const directory of directoriesArray) {
+                const currentPath = directoriesArray.slice(0, i).join('/');
+                logger_1.logger.debug(`Searching "/${currentPath}" for "${directory}"`);
+                const blobDescriptor = repoTree.data.tree.find(tree => tree.path === directory);
+                if ((blobDescriptor === null || blobDescriptor === void 0 ? void 0 : blobDescriptor.type) !== 'tree') {
+                    throw new Error(`Expected to find a tree (directory) at: ${currentPath}/${directory}`);
+                }
+                logger_1.logger.debug(`Found it! Getting contents of "${currentPath}/${directory}"..`);
+                repoTree = await this.request('GET /repos/:owner/:repo/git/trees/:sha', {
+                    owner: this.owner,
+                    repo: this.repo,
+                    sha: blobDescriptor.sha,
+                });
+                logger_1.logger.debug(`Found ${repoTree.data.tree.length} files/directories in "${currentPath}/${directory}"`);
+                i++;
+            }
+        }
+        const filename = path.split('/').pop();
+        const blobDescriptor = repoTree.data.tree.find(tree => tree.path === filename);
         if (!blobDescriptor) {
             throw new Error(`Could not find requested path: ${path}`);
         }
@@ -88414,7 +88435,7 @@ module.exports = {"i8":"12.6.0"};
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse("{\"name\":\"strong-log-transformer\",\"version\":\"2.1.0\",\"description\":\"Stream transformer that prefixes lines with timestamps and other things.\",\"author\":\"Ryan Graham <ryan@strongloop.com>\",\"license\":\"Apache-2.0\",\"repository\":{\"type\":\"git\",\"url\":\"git://github.com/strongloop/strong-log-transformer\"},\"keywords\":[\"logging\",\"streams\"],\"bugs\":{\"url\":\"https://github.com/strongloop/strong-log-transformer/issues\"},\"homepage\":\"https://github.com/strongloop/strong-log-transformer\",\"directories\":{\"test\":\"test\"},\"bin\":{\"sl-log-transformer\":\"bin/sl-log-transformer.js\"},\"main\":\"index.js\",\"scripts\":{\"test\":\"tap --100 test/test-*\"},\"dependencies\":{\"duplexer\":\"^0.1.1\",\"minimist\":\"^1.2.0\",\"through\":\"^2.3.4\"},\"devDependencies\":{\"tap\":\"^12.0.1\"},\"engines\":{\"node\":\">=4\"},\"_resolved\":\"https://registry.npmjs.org/strong-log-transformer/-/strong-log-transformer-2.1.0.tgz\",\"_integrity\":\"sha512-B3Hgul+z0L9a236FAUC9iZsL+nVHgoCJnqCbN588DjYxvGXaXaaFbfmQ/JhvKjZwsOukuR72XbHv71Qkug0HxA==\",\"_from\":\"strong-log-transformer@2.1.0\"}");
+module.exports = JSON.parse("{\"_from\":\"strong-log-transformer@^2.1.0\",\"_id\":\"strong-log-transformer@2.1.0\",\"_inBundle\":false,\"_integrity\":\"sha512-B3Hgul+z0L9a236FAUC9iZsL+nVHgoCJnqCbN588DjYxvGXaXaaFbfmQ/JhvKjZwsOukuR72XbHv71Qkug0HxA==\",\"_location\":\"/strong-log-transformer\",\"_phantomChildren\":{},\"_requested\":{\"type\":\"range\",\"registry\":true,\"raw\":\"strong-log-transformer@^2.1.0\",\"name\":\"strong-log-transformer\",\"escapedName\":\"strong-log-transformer\",\"rawSpec\":\"^2.1.0\",\"saveSpec\":null,\"fetchSpec\":\"^2.1.0\"},\"_requiredBy\":[\"/@lerna/child-process\"],\"_resolved\":\"https://registry.npmjs.org/strong-log-transformer/-/strong-log-transformer-2.1.0.tgz\",\"_shasum\":\"0f5ed78d325e0421ac6f90f7f10e691d6ae3ae10\",\"_spec\":\"strong-log-transformer@^2.1.0\",\"_where\":\"/home/sherex/documents/git-reps/release-please-action/node_modules/@lerna/child-process\",\"author\":{\"name\":\"Ryan Graham\",\"email\":\"ryan@strongloop.com\"},\"bin\":{\"sl-log-transformer\":\"bin/sl-log-transformer.js\"},\"bugs\":{\"url\":\"https://github.com/strongloop/strong-log-transformer/issues\"},\"bundleDependencies\":false,\"dependencies\":{\"duplexer\":\"^0.1.1\",\"minimist\":\"^1.2.0\",\"through\":\"^2.3.4\"},\"deprecated\":false,\"description\":\"Stream transformer that prefixes lines with timestamps and other things.\",\"devDependencies\":{\"tap\":\"^12.0.1\"},\"directories\":{\"test\":\"test\"},\"engines\":{\"node\":\">=4\"},\"homepage\":\"https://github.com/strongloop/strong-log-transformer\",\"keywords\":[\"logging\",\"streams\"],\"license\":\"Apache-2.0\",\"main\":\"index.js\",\"name\":\"strong-log-transformer\",\"repository\":{\"type\":\"git\",\"url\":\"git://github.com/strongloop/strong-log-transformer.git\"},\"scripts\":{\"test\":\"tap --100 test/test-*\"},\"version\":\"2.1.0\"}");
 
 /***/ }),
 
